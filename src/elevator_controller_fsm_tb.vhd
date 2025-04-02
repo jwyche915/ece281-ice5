@@ -11,8 +11,8 @@
 --| ---------------------------------------------------------------------------
 --|
 --| FILENAME      : MooreElevatorController_tb.vhd (TEST BENCH)
---| AUTHOR(S)     : Capt Phillip Warner, Capt Dan Johnson, **Your Name Here**
---| CREATED       : 03/2017 Last modified on 06/24/2020
+--| AUTHOR(S)     : Capt Phillip Warner, Capt Dan Johnson, Lt Col Jason Wyche
+--| CREATED       : 03/2017 Last modified on 04/02/2025
 --| DESCRIPTION   : This file tests the Moore elevator controller module
 --|
 --| DOCUMENTATION : None
@@ -103,7 +103,7 @@ begin
         w_reset <= '1';  wait for k_clk_period;
             assert w_floor = x"2" report "bad reset" severity failure; 
         -- clear reset
-		
+		w_reset <= '0';
 		-- active UP signal
 		w_up_down <= '1'; 
 		
@@ -113,17 +113,45 @@ begin
 		-- try waiting on a floor
         w_stop <= '1';  wait for k_clk_period * 2;
             assert w_floor = x"3" report "bad wait on floor3" severity failure;
+            
+        -- deactivate wait signal    
+        w_stop <= '0';
+        
 		--  go up again
+		wait for k_clk_period;
+		  assert w_floor = x"4" report "bad up from floor 3" severity failure;
+		
+		-- activate DOWN signal
+		w_up_down <= '0';  
 		
 		-- go back down one floor
+		wait for k_clk_period;
+		  assert w_floor = x"3" report "bad down from floor 4" severity failure;
+		  
+		-- activate UP signal
+		w_up_down <= '1';
 		
 		-- go up the rest of the way
+		wait for k_clk_period;
+		  assert w_floor = x"4" report "bad up from floor 3" severity failure;
 		
-		-- stop at top
+		-- stop at top with UP signal
+		wait for k_clk_period * 3;
+		  assert w_floor = x"4" report "bad stay at top with UP signal" severity failure;
         
-        -- go all the way down DOWN (how many clock cycles should that take?)
-        w_up_down <= '0'; 
-  
+        -- go all the way down DOWN (should take 3 clock cycles)
+        w_up_down <= '0';
+        wait for k_clk_period;
+		  assert w_floor = x"3" report "bad down from floor 4" severity failure;
+        wait for k_clk_period;
+		  assert w_floor = x"2" report "bad down from floor 3" severity failure;
+        wait for k_clk_period;
+		  assert w_floor = x"1" report "bad down from floor 2" severity failure;
+         
+        -- stay at bottom with DOWN signal
+        wait for k_clk_period * 3;
+		  assert w_floor = x"1" report "bad stay at bottome with DOWN signal" severity failure;
+        
 		  	
 		wait; -- wait forever
 	end process;	
